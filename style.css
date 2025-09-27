@@ -1,0 +1,280 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 30%, #8B4513 30%, #654321 100%);
+    height: 100vh;
+    overflow: hidden;
+}
+
+#gameContainer {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+}
+
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #FFD700;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#gameArea {
+    width: 100%;
+    height: calc(100vh - 120px);
+    position: relative;
+    overflow: hidden;
+}
+
+#miner {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 80px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23D2691E"/><circle cx="40" cy="40" r="5" fill="%23000"/><circle cx="60" cy="40" r="5" fill="%23000"/><path d="M35 60 Q50 70 65 60" stroke="%23000" stroke-width="3" fill="none"/></svg>') no-repeat center;
+    background-size: contain;
+    z-index: 10;
+}
+
+#hook {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    transform-origin: 50% 0;
+}
+
+#line {
+    width: 3px;
+    height: 100px;
+    background: #8B4513;
+    margin: 0 auto;
+    transition: height 0.3s ease;
+}
+
+#claw {
+    width: 20px;
+    height: 20px;
+    background: #C0C0C0;
+    border-radius: 50% 50% 0 0;
+    margin: 0 auto;
+    position: relative;
+    cursor: pointer;
+}
+
+#claw::before,
+#claw::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    background: #C0C0C0;
+    border-radius: 0 0 50% 50%;
+}
+
+#claw::before {
+    left: 2px;
+    bottom: -8px;
+    transform: rotate(-20deg);
+}
+
+#claw::after {
+    right: 2px;
+    bottom: -8px;
+    transform: rotate(20deg);
+}
+
+#underground {
+    position: absolute;
+    top: 30%;
+    left: 0;
+    width: 100%;
+    height: 70%;
+    background: linear-gradient(to bottom, #8B4513, #654321);
+}
+
+.treasure {
+    position: absolute;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.treasure:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+
+.gold {
+    background: #FFD700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+}
+
+.silver {
+    background: #C0C0C0;
+    box-shadow: 0 0 8px rgba(192, 192, 192, 0.6);
+}
+
+.diamond {
+    background: #B9F2FF;
+    box-shadow: 0 0 15px rgba(185, 242, 255, 0.9);
+    clip-path: polygon(50% 0%, 0% 40%, 50% 100%, 100% 40%);
+}
+
+.rock {
+    background: #696969;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(105, 105, 105, 0.5);
+}
+
+#controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+}
+
+button {
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    border: none;
+    border-radius: 25px;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#gameOver {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+#gameOverContent {
+    background: linear-gradient(145deg, #2C3E50, #34495E);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    color: #FFD700;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 2px solid #FFD700;
+}
+
+#gameOverContent h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+#gameOverContent p {
+    font-size: 1.5em;
+    margin-bottom: 30px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.swinging {
+    animation: swing 2s ease-in-out infinite;
+}
+
+@keyframes swing {
+    0% { transform: translateX(-50%) rotate(-60deg); }
+    50% { transform: translateX(-50%) rotate(60deg); }
+    100% { transform: translateX(-50%) rotate(-60deg); }
+}
+
+.extending {
+    animation: extend 1s ease-out forwards;
+}
+
+@keyframes extend {
+    to {
+        height: 300px;
+    }
+}
+
+.retracting {
+    animation: retract 1s ease-in forwards;
+}
+
+@keyframes retract {
+    to {
+        height: 50px;
+    }
+}
+
+.caught {
+    animation: caught 0.5s ease-in-out;
+}
+
+@keyframes caught {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3) rotate(10deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+@media (max-width: 768px) {
+    #header {
+        font-size: 14px;
+        padding: 15px;
+    }
+
+    button {
+        padding: 12px 24px;
+        font-size: 14px;
+    }
+
+    #gameOverContent {
+        padding: 30px;
+        margin: 20px;
+    }
+
+    #gameOverContent h2 {
+        font-size: 2em;
+    }
+
+    #gameOverContent p {
+        font-size: 1.2em;
+    }
+}
