@@ -2,46 +2,81 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黄金挖矿游戏</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>黄金矿工</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div id="gameContainer">
-        <div id="header">
-            <div id="score">金币: <span id="scoreValue">0</span></div>
-            <div id="timer">时间: <span id="timeValue">60</span>s</div>
-            <div id="target">目标: <span id="targetValue">500</span></div>
-        </div>
-
-        <div id="gameArea">
-            <div id="miner">
-                <div id="hook">
-                    <div id="line"></div>
-                    <div id="claw"></div>
-                </div>
-            </div>
-
-            <div id="underground">
-                <!-- 金块和石头将动态生成 -->
+    <div id="game-container">
+        <!-- 开始界面 -->
+        <div id="start-screen" class="screen">
+            <div class="logo">黄金矿工</div>
+            <div class="buttons">
+                <button id="start-game">开始游戏</button>
+                <button id="level-select">关卡选择</button>
+                <button id="settings">设置</button>
             </div>
         </div>
 
-        <div id="controls">
-            <button id="startBtn">开始游戏</button>
-            <button id="resetBtn">重新开始</button>
+        <!-- 游戏界面 -->
+        <div id="game-screen" class="screen hidden">
+            <div class="game-info">
+                <div class="level">关卡: <span id="current-level">1</span></div>
+                <div class="target">目标: <span id="target-amount">0</span></div>
+                <div class="score">当前: <span id="current-amount">0</span></div>
+                <div class="timer">时间: <span id="time-left">60</span></div>
+            </div>
+            
+            <div id="game-area">
+                <canvas id="game-canvas"></canvas>
+            </div>
+            
+            <button id="pause-btn" class="game-btn">暂停</button>
         </div>
 
-        <div id="gameOver" class="hidden">
-            <div id="gameOverContent">
-                <h2 id="gameResult">游戏结束</h2>
-                <p>最终得分: <span id="finalScore">0</span></p>
-                <button id="playAgainBtn">再玩一次</button>
+        <!-- 结束界面 - 成功 -->
+        <div id="success-screen" class="screen hidden">
+            <h2>闯关成功！</h2>
+            <div class="stars">
+                <span class="star">★</span>
+                <span class="star">★</span>
+                <span class="star">★</span>
             </div>
+            <div class="buttons">
+                <button id="next-level">下一关</button>
+                <button id="replay-level">重玩</button>
+                <button id="back-to-menu">返回</button>
+            </div>
+        </div>
+
+        <!-- 结束界面 - 失败 -->
+        <div id="fail-screen" class="screen hidden">
+            <h2>再接再厉</h2>
+            <div class="buttons">
+                <button id="restart-level">重新开始</button>
+                <button id="use-props">使用道具</button>
+                <button id="back-to-menu-fail">返回</button>
+            </div>
+        </div>
+
+        <!-- 暂停界面 -->
+        <div id="pause-screen" class="screen hidden">
+            <h2>游戏暂停</h2>
+            <div class="buttons">
+                <button id="continue-game">继续游戏</button>
+                <button id="restart-game">重新开始</button>
+                <button id="exit-level">退出关卡</button>
+            </div>
+        </div>
+
+        <!-- 关卡选择界面 -->
+        <div id="level-select-screen" class="screen hidden">
+            <h2>关卡选择</h2>
+            <div id="levels-grid"></div>
+            <button id="back-from-levels">返回</button>
         </div>
     </div>
 
-    <script src="effects.js"></script>
-    <script src="script.js"></script>
+    <script src="js/game.js"></script>
 </body>
 </html>
