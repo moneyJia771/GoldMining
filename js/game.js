@@ -17,7 +17,6 @@ class GoldMiner {
         
         // 屏幕元素
         this.screens = {
-            start: document.getElementById('start-screen'),
             game: document.getElementById('game-screen'),
             success: document.getElementById('success-screen'),
             fail: document.getElementById('fail-screen'),
@@ -46,17 +45,21 @@ class GoldMiner {
         // 初始化钩子
         this.hook = new Hook(this.canvas.width / 2, 60, this.ctx);
         
-        // 绑定事件
-        this.bindEvents();
-        
         // 初始化关卡选择界面
         this.initLevelSelect();
         
-        // 显示开始界面
-        this.showScreen('start');
+        // 显示游戏界面但不开始游戏
+        this.showScreen('game');
         
-        // 启动钩子摆动动画
-        this.animateHook();
+        // 绑定事件（在显示界面后）
+        this.bindEvents();
+        
+        // 初始化游戏状态为"ready"（准备状态）
+        this.gameState = 'ready';
+        
+        // 绘制初始状态的游戏界面
+        this.drawBackground();
+        this.drawMiner();
     }
     
     // 钩子摆动动画
@@ -67,8 +70,8 @@ class GoldMiner {
         // 绘制背景
         this.drawBackground();
         
-        // 更新并绘制钩子
-        if (this.gameState !== 'playing') {
+        // 更新并绘制钩子 - 只在ready状态下摆动
+        if (this.gameState === 'ready') {
             this.hook.update();
         }
         this.hook.draw();
@@ -76,62 +79,150 @@ class GoldMiner {
         // 如果游戏正在进行中，则使用gameLoop
         if (this.gameState === 'playing') {
             this.gameLoop();
+        } else if (this.gameState === 'paused') {
+            // 暂停状态下不继续动画循环，保持静止
+            this.drawPausedState();
         } else {
-            // 否则继续钩子摆动动画
+            // 其他状态（ready）继续钩子摆动动画
             requestAnimationFrame(() => this.animateHook());
         }
     }
     
     // 调整画布尺寸
     resizeCanvas() {
-        const container = document.getElementById('game-container');
-        this.canvas.width = container.clientWidth;
-        this.canvas.height = container.clientHeight;
+        const container = document.getElementById('game-area');
+        if (container) {
+            this.canvas.width = container.clientWidth;
+            this.canvas.height = container.clientHeight;
+        }
     }
     
-    // 绑定事件
     bindEvents() {
-        // 开始界面按钮
-        document.getElementById('start-game').addEventListener('click', () => this.startGame(1));
-        document.getElementById('level-select').addEventListener('click', () => this.showScreen('levelSelect'));
-        
-        // 游戏界面按钮
-        document.getElementById('pause-btn').addEventListener('click', () => this.pauseGame());
-        
-        // 成功界面按钮
-        document.getElementById('next-level').addEventListener('click', () => this.startGame(this.currentLevel + 1));
-        document.getElementById('replay-level').addEventListener('click', () => this.startGame(this.currentLevel));
-        document.getElementById('back-to-menu').addEventListener('click', () => this.showScreen('start'));
-        
-        // 失败界面按钮
-        document.getElementById('restart-level').addEventListener('click', () => this.startGame(this.currentLevel));
-        document.getElementById('use-props').addEventListener('click', () => {
-            // 道具功能待实现
-            alert('道具功能尚未实现');
-        });
-        document.getElementById('back-to-menu-fail').addEventListener('click', () => this.showScreen('start'));
-        
-        // 暂停界面按钮
-        document.getElementById('continue-game').addEventListener('click', () => this.continueGame());
-        document.getElementById('restart-game').addEventListener('click', () => this.startGame(this.currentLevel));
-        document.getElementById('exit-level').addEventListener('click', () => this.showScreen('start'));
-        
-        // 关卡选择界面按钮
-        document.getElementById('back-from-levels').addEventListener('click', () => this.showScreen('start'));
-        
-        // 游戏操作 - 点击/触摸发射钩子
-        this.canvas.addEventListener('click', () => {
-            if (this.gameState === 'playing' && !this.hook.isLaunched) {
-                this.hook.launch();
-            }
-        });
-        
+        // 游戏操作事件 - 点击发射钩子
+        if (this.canvas) {
+            this.canvas.addEventListener('click', () => {
+                if (this.gameState === 'playing' && this.hook && !this.hook.isLaunched) {
+                    this.hook.launch();
+                }
+            });
+        }
+
         // 键盘操作 - 空格键发射钩子
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && this.gameState === 'playing' && !this.hook.isLaunched) {
+            if (e.code === 'Space' && this.gameState === 'playing' && this.hook && !this.hook.isLaunched) {
+                e.preventDefault();
                 this.hook.launch();
             }
         });
+        
+        // 开始按钮
+        const startBtn = document.getElementById('start-btn');
+        if (startBtn) {
+            startBtn.addEventListener('click', () => {
+                if (this.gameState === 'ready' || this.gameState === 'paused') {
+                    this.startGame(this.currentLevel || 1);
+                }
+            });
+        }
+        
+        // 暂停按钮
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                if (this.gameState === 'playing') {
+                    this.pauseGame();
+                } else if (this.gameState === 'paused') {
+                    // 如果已经暂停，则恢复游戏
+                    this.gameState = 'playing';
+                    this.startTimer();
+                    // 重新启动游戏循环
+                    this.gameLoop();
+                }
+            });
+        }
+        
+        // 重置按钮
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.resetGame();
+            });
+        }
+        
+        // 暂停界面按钮
+        const continueBtn = document.getElementById('continue-game');
+        if (continueBtn) {
+            continueBtn.addEventListener('click', () => {
+                // 恢复游戏状态
+                this.gameState = 'playing';
+                // 重新启动计时器
+                this.startTimer();
+                // 显示游戏界面
+                this.showScreen('game');
+            });
+        }
+        
+        const restartBtn = document.getElementById('restart-game');
+        if (restartBtn) {
+            restartBtn.addEventListener('click', () => {
+                // 重新开始当前关卡
+                this.startGame(this.currentLevel || 1);
+            });
+        }
+        
+        const exitBtn = document.getElementById('exit-level');
+        if (exitBtn) {
+            exitBtn.addEventListener('click', () => {
+                // 重置游戏
+                this.resetGame();
+                // 显示关卡选择界面
+                this.showScreen('levelSelect');
+            });
+        }
+        
+        // 成功界面按钮
+        const nextLevelBtn = document.getElementById('next-level');
+        if (nextLevelBtn) {
+            nextLevelBtn.addEventListener('click', () => {
+                // 进入下一关
+                this.startGame(this.currentLevel);
+            });
+        }
+        
+        const replayLevelBtn = document.getElementById('replay-level');
+        if (replayLevelBtn) {
+            replayLevelBtn.addEventListener('click', () => {
+                // 重玩当前关卡
+                this.startGame(this.currentLevel);
+            });
+        }
+        
+        const backToMenuBtn = document.getElementById('back-to-menu');
+        if (backToMenuBtn) {
+            backToMenuBtn.addEventListener('click', () => {
+                // 返回到关卡选择界面
+                this.resetGame();
+                this.showScreen('levelSelect');
+            });
+        }
+        
+        // 失败界面按钮
+        const restartLevelBtn = document.getElementById('restart-level');
+        if (restartLevelBtn) {
+            restartLevelBtn.addEventListener('click', () => {
+                // 重新开始当前关卡
+                this.startGame(this.currentLevel);
+            });
+        }
+        
+        const backToMenuFailBtn = document.getElementById('back-to-menu-fail');
+        if (backToMenuFailBtn) {
+            backToMenuFailBtn.addEventListener('click', () => {
+                // 返回到关卡选择界面
+                this.resetGame();
+                this.showScreen('levelSelect');
+            });
+        }
     }
     
     // 初始化关卡选择界面
@@ -161,12 +252,107 @@ class GoldMiner {
         // 显示指定界面
         this.screens[screen].classList.remove('hidden');
         
-        // 更新游戏状态
-        this.gameState = screen === 'game' ? 'playing' : screen;
+        // 更新游戏状态（但不自动设置为playing，由startGame控制）
+        if (screen !== 'game') {
+            this.gameState = screen;
+        }
         
         // 如果显示关卡选择界面，更新关卡按钮
         if (screen === 'levelSelect') {
             this.initLevelSelect();
+        }
+    }
+    
+    // 暂停游戏
+    pauseGame() {
+        if (this.gameState !== 'playing') return;
+        
+        // 保存当前游戏状态
+        this.gameState = 'paused';
+        
+        // 停止计时器
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+        
+        // 不再显示暂停界面，直接在游戏界面暂停
+        // 重新绘制一次游戏画面，确保所有元素都显示
+        this.drawPausedState();
+    }
+    
+    // 绘制暂停状态的游戏画面
+    drawPausedState() {
+        // 清空画布
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // 绘制背景
+        this.drawBackground();
+        
+        // 绘制物品
+        this.items.forEach(item => {
+            item.draw(this.ctx);
+        });
+        
+        // 绘制钩子（不更新位置）
+        this.hook.draw();
+        
+        // 绘制矿工
+        this.drawMiner();
+        
+        // 绘制"已暂停"文字提示
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.font = 'bold 36px Arial';
+        this.ctx.fillStyle = 'white';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('游戏已暂停', this.canvas.width / 2, this.canvas.height / 2);
+        this.ctx.restore();
+    }
+    
+    // 启动计时器
+    startTimer() {
+        // 清除现有计时器
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
+        
+        // 创建新计时器
+        this.timer = setInterval(() => {
+            if (this.gameState === 'playing') {
+                this.timeLeft--;
+                this.elements.timeLeft.textContent = this.timeLeft;
+                
+                // 时间到，游戏结束
+                if (this.timeLeft <= 0) {
+                    this.endGame(this.score >= this.targetScore);
+                }
+            }
+        }, 1000);
+    }
+    
+    // 重置游戏
+    resetGame() {
+        // 重置为初始状态
+        this.gameState = 'ready';
+        
+        // 重置钩子位置
+        if (this.hook) {
+            this.hook.reset();
+        }
+        
+        // 清除所有物品
+        this.items = [];
+        
+        // 重绘游戏界面
+        this.drawBackground();
+        this.drawMiner();
+        
+        // 停止计时器
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
         }
     }
     
@@ -187,6 +373,12 @@ class GoldMiner {
         this.elements.currentAmount.textContent = this.score;
         this.elements.timeLeft.textContent = this.timeLeft;
         
+        // 设置游戏状态为"playing"
+        this.gameState = 'playing';
+        
+        // 启动钩子摆动动画
+        this.animateHook();
+        
         // 重置钩子
         this.hook.reset();
         
@@ -195,6 +387,9 @@ class GoldMiner {
         
         // 显示游戏界面
         this.showScreen('game');
+        
+        // 启动计时器
+        this.startTimer();
         
         // 开始游戏循环
         this.gameLoop();
@@ -290,15 +485,6 @@ class GoldMiner {
         }, 1000);
     }
     
-    // 暂停游戏
-    pauseGame() {
-        // 暂停计时器
-        clearInterval(this.timerInterval);
-        
-        // 显示暂停界面
-        this.showScreen('pause');
-    }
-    
     // 继续游戏
     continueGame() {
         // 显示游戏界面
@@ -330,6 +516,11 @@ class GoldMiner {
     
     // 游戏主循环
     gameLoop() {
+        // 如果游戏暂停，不继续游戏循环
+        if (this.gameState === 'paused') {
+            return;
+        }
+        
         // 如果游戏不在进行中，切换回钩子摆动动画
         if (this.gameState !== 'playing') {
             requestAnimationFrame(() => this.animateHook());

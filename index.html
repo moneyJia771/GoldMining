@@ -8,18 +8,15 @@
 </head>
 <body>
     <div id="game-container">
-        <!-- 开始界面 -->
-        <div id="start-screen" class="screen">
-            <div class="logo">黄金矿工</div>
-            <div class="buttons">
-                <button id="start-game">开始游戏</button>
-                <button id="level-select">关卡选择</button>
-                <button id="settings">设置</button>
-            </div>
-        </div>
-
         <!-- 游戏界面 -->
-        <div id="game-screen" class="screen hidden">
+        <div id="game-screen" class="screen">
+            <!-- 1. 游戏标题和说明 -->
+            <div class="game-header">
+                <h2 class="game-title">⛏️ 黄金矿工 ⛏️</h2>
+                <p class="game-instruction">👉 点击桌面发射钩子，抓去地下的宝物！</p>
+            </div>
+            
+            <!-- 2. 关卡信息 -->
             <div class="game-info">
                 <div class="level">关卡: <span id="current-level">1</span></div>
                 <div class="target">目标: <span id="target-amount">0</span></div>
@@ -27,11 +24,17 @@
                 <div class="timer">时间: <span id="time-left">60</span></div>
             </div>
             
+            <!-- 3. 游戏区域 -->
             <div id="game-area">
                 <canvas id="game-canvas"></canvas>
             </div>
             
-            <button id="pause-btn" class="game-btn">暂停</button>
+            <!-- 4. 控制按钮 -->
+            <div class="game-controls">
+                <button id="start-btn" class="control-btn">开始</button>
+                <button id="pause-btn" class="control-btn">暂停</button>
+                <button id="reset-btn" class="control-btn">重置</button>
+            </div>
         </div>
 
         <!-- 结束界面 - 成功 -->
@@ -77,6 +80,6 @@
         </div>
     </div>
 
-    <script src="js/game.js"></script>
+    <script src="js/game.js?v=20241225"></script>
 </body>
 </html>
